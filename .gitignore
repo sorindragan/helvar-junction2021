@@ -1,6 +1,12 @@
+<<<<<<< HEAD
 
 .vscode/
 data/
+=======
+# Data
+/data
+
+>>>>>>> c5304f5abdf214dad8918d8d11d3ce1d4f17ba40
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
