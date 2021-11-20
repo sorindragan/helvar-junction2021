@@ -13,7 +13,7 @@ batch_size:
 lr:
   desc: learning rate
   value: 0.0005
-hidden_dims:
+hidden_dim:
   desc: hidden dims of GRU
   value: 2
 layer_dim:

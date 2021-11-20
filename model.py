@@ -4,19 +4,19 @@ import torch.optim as optim
 
 
 class SequenceLearner(nn.Module):
-    def __init__(self, input_size, hidden_size, num_layers, output_dim, config):
+    def __init__(self, config):
         super().__init__()
-        self.input_size = input_size
-        self.hidden_size = hidden_size
-        self.num_layers = num_layers
-        self.output_dim = output_dim
         self.config = config
+        self.input_size = config.latent_dim
+        self.hidden_size = config.hidden_dim
+        self.num_layers = config.layer_dim
+        self.output_dim = config.output_dim
     
-        self.encoder = Encoder(input_size, config)
+        self.encoder = Encoder(config)
 
-        self.gru = nn.GRU(input_size=input_size,
-                          hidden_size=hidden_size,
-                          num_layers=num_layers,
+        self.gru = nn.GRU(input_size=self.input_size,
+                          hidden_size=self.hidden_size,
+                          num_layers=self.num_layers,
                           batch_first=True)
 
         self.fc = nn.Linear(self.hidden_size, self.output_dim)

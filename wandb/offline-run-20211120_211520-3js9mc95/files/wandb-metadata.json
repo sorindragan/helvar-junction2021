@@ -1,0 +1,24 @@
+{
+    "os": "Linux-5.14.11-arch1-1-x86_64-with-glibc2.33",
+    "python": "3.9.7",
+    "heartbeatAt": "2021-11-20T20:15:22.696618",
+    "startedAt": "2021-11-20T20:15:20.980189",
+    "docker": null,
+    "gpu": "NVIDIA GeForce RTX 2060",
+    "gpu_count": 1,
+    "cpu_count": 12,
+    "cuda": null,
+    "args": [],
+    "state": "running",
+    "program": "/home/mvalente/projects/helvar-junction2021/train.py",
+    "codePath": "train.py",
+    "git": {
+        "remote": "https://github.com/sorindragan/helvar-junction2021.git/",
+        "commit": "d946c00a2aa080992c6d04d541f079ce6af3a310"
+    },
+    "email": "miguelvalente@protonmail.com",
+    "root": "/home/mvalente/projects/helvar-junction2021",
+    "host": "prodigy",
+    "username": "mvalente",
+    "executable": "/home/mvalente/.config/anaconda3/envs/junction/bin/python"
+}
