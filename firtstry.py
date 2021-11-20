@@ -1,4 +1,5 @@
 import pickle
+import itertools
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -7,6 +8,7 @@ from random import shuffle
 from pprint import pprint
 from tqdm import tqdm
 from copy import deepcopy
+
 
 from utils import str_to_seconds, find_position_by_polygon
 
@@ -28,8 +30,8 @@ if dict_generation:
 
 # constants
 def_neighbour = -1
-max_distance = 9999
-polygon_corners = 3
+max_distance = -1
+polygon_corners = 2
 neighbours_number = int(polygon_corners * 1.5)
 secs_between_events = 1.5
 window_size = 5
@@ -44,9 +46,13 @@ known_ids = ids[:int(pct*len(ids))]
 initial_known_inds = deepcopy(known_ids)
 unknown_ids = [i for i in ids if i not in known_ids]
 
+corr = np.zeros([len(ids), len(ids)])
+# tuple_dict = {(d1, d2): [] for d1, d2 in itertools.product(len(ids), len(ids))}
+tuple_dict = {(d1, d2): 0 for d1, d2 in itertools.product(range(len(ids)), range(len(ids))) if d1 != d2}
+
+
 # tuple_dict pkl generation
 if dict_generation:
-    tuple_dict = {}
     rows = list(df_events.iterrows())
     length = len(rows)
     ws = window_size
@@ -54,7 +60,7 @@ if dict_generation:
 
     for i, row in tqdm(rows[ws//2+1:length-ws-1]):
         t = row['timestamp']
-        d = row['deviceid']
+        d = int(row['deviceid'])
 
         try: 
             queue.append(rows[i+ws][1])
@@ -66,26 +72,25 @@ if dict_generation:
 
         for n in queue:
             nt = n['timestamp']
-            nd = n['deviceid']
+            nd = int(n['deviceid'])
             if d == nd:
                 continue
-            
-            if (d, nd) not in tuple_dict: 
-                tuple_dict[(d, nd)] = []
             
             deltat = abs(t - nt)
             if deltat > secs_between_events:
                 continue
 
-            if (d, nd) in tuple_dict:
-                tuple_dict[(d, nd)].append(deltat)
-            else:
-                tuple_dict[(nd, d)].append(deltat)
-        
-
+            # tuple_dict[(d, nd)].append(deltat)
+            tuple_dict[(d, nd)] += 1
+            tuple_dict[(nd, d)] += 1
+            corr[int(d), int(nd)] += 1
+            corr[int(nd), int(d)] += 1
+            # tuple_dict[(nd, d)].append(deltat)
 
     with open(f"./data/{site}/tuplepairs.pkl", 'wb') as f:
         pickle.dump(tuple_dict, f)
+
+# pprint(corr)
 
 # tuple_dict load
 with open(f"./data/{site}/tuplepairs.pkl", 'rb') as f:
@@ -95,19 +100,23 @@ with open(f"./data/{site}/tuplepairs.pkl", 'rb') as f:
 neighbours_dict = {}
 
 for k, v in tuple_dict.items():
-    avg = sum(v) / (len(v) + 1)
-    # fire at the same time - prodbably different locations
-    if avg == 0 and discard_simultaniously:
-        continue
-    neighbours_dict[k] = avg
+    # avg = sum(v) / (len(v) + 1)
+    # # fire at the same time - prodbably different locations
+    # if avg == 0 and discard_simultaniously:
+    #     continue
+    # neighbours_dict[k] = avg
+    neighbours_dict[k] = v
 
 neighbours_dict = sorted(neighbours_dict.items(), key=lambda x: x[0][0])
 
 closest_neighbours = {k:[(def_neighbour, max_distance)] * neighbours_number for k in ids}
 for k, v in neighbours_dict:
-    if v < closest_neighbours[k[0]][0][1]:
+    # if v < closest_neighbours[k[0]][0][1]:
+    #     closest_neighbours[k[0]][0] = (k[1], v)
+    #     closest_neighbours[k[0]].sort(key=lambda t: t[1], reverse=True)
+    if v > closest_neighbours[k[0]][0][1]:
         closest_neighbours[k[0]][0] = (k[1], v)
-        closest_neighbours[k[0]].sort(key=lambda t: t[1], reverse=True)
+        closest_neighbours[k[0]].sort(key=lambda t: t[1])
 
 # pprint(closest_neighbours)
 
