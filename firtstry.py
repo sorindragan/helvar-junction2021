@@ -8,7 +8,7 @@ from pprint import pprint
 from tqdm import tqdm
 from copy import deepcopy
 
-from utils import str_to_seconds, find_position_by_triangle
+from utils import str_to_seconds, find_position_by_polygon
 
 
 site = 'site_1'
@@ -26,7 +26,7 @@ if dict_generation:
 
 
 # pctage of known ids
-pct = 0.5
+pct = 0.9
 ids = list(set(df_events['deviceid']))
 shuffle(ids)
 
@@ -82,9 +82,9 @@ neighbours_dict = sorted(neighbours_dict.items(), key=lambda x: x[0][0])
 
 def_neighbour = -1
 max_distance = 9999
-neighbbours_number = 5
-
-closest_neighbours = {k:[(def_neighbour, max_distance)] * neighbbours_number for k in ids}
+polygon_edges = 3
+neighbours_number = polygon_edges* 2
+closest_neighbours = {k:[(def_neighbour, max_distance)] * neighbours_number for k in ids}
 for k, v in neighbours_dict:
     if v < closest_neighbours[k[0]][0][1]:
         closest_neighbours[k[0]][0] = (k[1], v)
@@ -99,7 +99,7 @@ available_for_computation = [-1]
 while len(available_for_computation) > 0:
     available_for_computation = []
     for k, v in closest_neighbours.items():
-        if k in unknown_ids and sum([1 if i in known_ids else 0 for i in [p[0] for p in v]]) >= 3:
+        if k in unknown_ids and sum([1 if i in known_ids else 0 for i in [p[0] for p in v]]) >= polygon_edges:
             available_for_computation.append(k)
             corner_list = [(
                             (float(df_coords.iloc[int(p[0])]['x']), 
@@ -107,11 +107,11 @@ while len(available_for_computation) > 0:
                              p[1]
                             ) for p in v
                             if p[0] in known_ids
-                        ][:3]
-            approximated_devices[k] = find_position_by_triangle(corner_list[0][0], corner_list[0][1],
-                                                                corner_list[1][0], corner_list[2][1],
-                                                                corner_list[2][0], corner_list[1][1]
-                                                                )
+                        ][:polygon_edges]
+          
+            points = np.array([x[0] for x in corner_list])
+            distances = np.array([x[1] for x in corner_list])
+            approximated_devices[k] = find_position_by_polygon(points,distances)
             # use approximations instead of actual values for each newly added point
             df_coords.iloc[int(k), df_coords.columns == 'x'] = approximated_devices[k][0]
             df_coords.iloc[int(k), df_coords.columns == 'y'] = approximated_devices[k][1]
