@@ -72,6 +72,8 @@ class SequenceDataset(Dataset):
 
             self.site_data_dict[site_number] = data_list
 
+            with open("data/data_list.pkl","wb") as f:
+                pickle.dump(data_list,f)
 
 
             
