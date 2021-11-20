@@ -3,4 +3,4 @@ bin_width:
   value: 0.5
 total_sequence_time:
   desc: Total sequence time in hours
-  value: 8
+  value: 2
