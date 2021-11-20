@@ -59,30 +59,27 @@ class SequenceDataset(Dataset):
                     boolean_array = np.zeros(n_devices)
                     bucket_dif = new_bucket_index - bucket_index 
                     if bucket_dif>1:
-                        data_point = Data_point(boolean_array,site_number)
+                        data_point = (boolean_array,site_number)
                         fill_in_zeros = [data_point]*(bucket_dif-1)
                         data_list.extend(fill_in_zeros)
 
                     boolean_array[np.array(list(current_device_set))] = 1
                     current_device_set = set()
                     bucket_index = new_bucket_index
-                    data_point = Data_point(boolean_array,site_number)
+                    data_point = (boolean_array,site_number)
                     data_list.append(data_point)
                 current_device_set.add(int(device_id))
 
             self.site_data_dict[site_number] = data_list
 
 
-        
+
+            
 
 
-                
-                
-                
 
-
-        with open("data/data_list.pkl","rb") as f:
-            pickle.dump(self.data_list,f)
+        with open("data/data_list.pkl","wb") as f:
+            pickle.dump(self.site_data_dict,f)
 
 
                     
