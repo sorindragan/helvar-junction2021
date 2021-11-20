@@ -10,14 +10,17 @@ def yaml_loader(path):
             config_dict[key] = val['value']
     return config_dict
 
-def str_to_seconds(strg):
+def str_to_seconds(strg,return_date = False):
     try:
-        date_time_obj = datetime.strptime(strg, "%Y-%m-%dT%H:%M:%S.%fZ").timestamp()
+        date_time_obj = datetime.strptime(strg, "%Y-%m-%dT%H:%M:%S.%fZ")
     except:
-        date_time_obj = datetime.strptime(strg, "%Y-%m-%dT%H:%M:%SZ").timestamp()
+        date_time_obj = datetime.strptime(strg, "%Y-%m-%dT%H:%M:%SZ")
     
       
+    if not return_date:
+        date_time_obj = date_time_obj.timestamp()
 
+        
 
     return date_time_obj
 
