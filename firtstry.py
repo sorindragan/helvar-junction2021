@@ -12,9 +12,9 @@ from utils import str_to_seconds, find_position_by_polygon
 
 
 site = 'site_1'
-dict_generation = True
+dict_generation = False
 discard_simultaniously = False
-random_points = False
+random_points = True
 df_coords = pd.read_json(f'./data/{site}/{site}.json')
 df_events = pd.read_pickle(f'./data/{site}/{site}.pkl', compression='gzip')
 
@@ -22,16 +22,17 @@ df_solution = deepcopy(df_coords)
 
 print(df_events.shape)
 
-df_events = df_events.sort_values(by=['timestamp'])
 if dict_generation:
     df_events['timestamp'] = df_events['timestamp'].apply(lambda x : str_to_seconds(x))
+    df_events = df_events.sort_values(by=['timestamp']).reset_index()
 
 # constants
 def_neighbour = -1
 max_distance = 9999
-polygon_corners = 5
+polygon_corners = 3
 neighbours_number = int(polygon_corners * 1.5)
-secs_between_events = 1
+secs_between_events = 1.5
+window_size = 5
 
 # pctage of known ids
 pct = 0.9
@@ -43,39 +44,44 @@ known_ids = ids[:int(pct*len(ids))]
 initial_known_inds = deepcopy(known_ids)
 unknown_ids = [i for i in ids if i not in known_ids]
 
-# TODO: remve this shit
-unknown_ids = [25, 4, 6, 9, 45, 22]
-known_ids = [i for i in ids if i not in unknown_ids]
-initial_known_inds = deepcopy(known_ids)
-
 # tuple_dict pkl generation
 if dict_generation:
     tuple_dict = {}
-    last_t, last_d = -1, -1
+    rows = list(df_events.iterrows())
+    length = len(rows)
+    ws = window_size
+    queue = [r[1] for r in rows[:ws]]
 
-    for i, row in tqdm(df_events.iterrows()):
+    for i, row in tqdm(rows[ws//2+1:length-ws-1]):
         t = row['timestamp']
         d = row['deviceid']
-        
-        if last_d == -1 or last_d == d:
-            last_d = d
-            last_t = t
-            continue
-        
-        if (last_d, d) not in tuple_dict: 
-            tuple_dict[(last_d, d)] = []
-        
-        deltat = abs(last_t - t)
-        if deltat > secs_between_events:
-            continue
 
-        if (d, last_d) in tuple_dict:
-            tuple_dict[(d, last_d)].append(deltat)
-        else:
-            tuple_dict[(last_d, d)].append(deltat)
+        try: 
+            queue.append(rows[i+ws][1])
+        except: 
+            print("Index out of bounds")
+            print(i+ws)
+            print(length)
+        queue.pop(0)
+
+        for n in queue:
+            nt = n['timestamp']
+            nd = n['deviceid']
+            if d == nd:
+                continue
+            
+            if (d, nd) not in tuple_dict: 
+                tuple_dict[(d, nd)] = []
+            
+            deltat = abs(t - nt)
+            if deltat > secs_between_events:
+                continue
+
+            if (d, nd) in tuple_dict:
+                tuple_dict[(d, nd)].append(deltat)
+            else:
+                tuple_dict[(nd, d)].append(deltat)
         
-        last_t = t
-        last_d = d
 
 
     with open(f"./data/{site}/tuplepairs.pkl", 'wb') as f:
@@ -85,6 +91,7 @@ if dict_generation:
 with open(f"./data/{site}/tuplepairs.pkl", 'rb') as f:
     tuple_dict = pickle.load(f)
 
+# pprint(tuple_dict)
 neighbours_dict = {}
 
 for k, v in tuple_dict.items():
@@ -143,9 +150,19 @@ y = np.array([v[1] for v in approximated_devices.values()])
 plt.scatter(x, y, c='b')
 
 # real solution
-x = np.array([float(df_solution.iloc[int(k)]['x']) for k in approximated_devices.keys()])
-y = np.array([float(df_solution.iloc[int(k)]['y']) for k in approximated_devices.keys()])
+x = np.array([float(df_solution.iloc[int(k)]['x']) for k in sorted(approximated_devices.keys())])
+y = np.array([float(df_solution.iloc[int(k)]['y']) for k in sorted(approximated_devices.keys())])
 plt.scatter(x, y, c='r')
+
+# TODO: code a grid search
+# mean diference
+points_ = np.array([c[1] for c in sorted(list(approximated_devices.items()), key=lambda x: x[0])])
+points = np.array([[x, y] for x, y in zip(x, y)])
+avg_diff = np.linalg.norm(points - points_, axis=1).mean()
+pprint("Error")
+pprint(avg_diff)
+pprint(points)
+pprint(points_)
 
 # initial known points
 x = np.array([float(df_solution.iloc[int(k)]['x']) for k in initial_known_inds])
