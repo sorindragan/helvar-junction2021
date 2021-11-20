@@ -2,22 +2,36 @@ import torch
 import torch.optim as optim
 from model import SequenceLearner
 
-latent_dim = 30
-input_dim = latent_dim
-hidden_dim = 2
-layer_dim = 2
-output_dim = 2 #for each coordinate
+import wandb
 
-seq_learner = SequenceLearner(input_dim, hidden_dim, layer_dim, output_dim)
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+run = wandb.init(project="junction", entity="mvalente", config=r'config/train.yaml')
+config = wandb.config
+
+seq_learner = SequenceLearner(config.latent_dim,
+                              config.hidden_dim,
+                              config.layer_dim,
+                              config.output_dim,
+                              config.batch_size).to(device)
 
 optimizer = optim.Adam(seq_learner.parameters(),
-                       lr=float(0.004))
+                       lr=config.lr)
+loss_fn = torch.nn.MSELoss()
+
+# Dummy Data
 devices = 5
 coordinates = torch.randint(10,(16,5,3)).repeat(16,1,1,1) 
 
 epochs = range(10)
-for e in epochs:
+for e in config.epochs:
     for batch in coordinates:
-        seq_learner.zero_grad()
-        yhat = seq_learner(batch.float())
+        optimizer.zero_grad(())
+
+        yhat = seq_learner(batch.float().to(device))
+        y = batch[:,0,:2].shape
         
+        loss = loss_fn(yhat,y)
+        loss.backward()
+        optimizer.step()
+
+        run.log({"loss": loss.item()})

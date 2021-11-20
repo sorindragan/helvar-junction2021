@@ -1,0 +1,29 @@
+bin_width:
+  desc: Seconds bin width
+  value: 0.5
+total_sequence_time:
+  desc: Total sequence time in hours
+  value: 2
+epochs:
+  desc: self-descriptive
+  value: 30
+batch_size:
+  desc: batch size
+  value: 64
+lr:
+  desc: learning rate
+  value: 0.0005
+hidden_dims:
+  desc: hidden dims of GRU
+  value: 2
+layer_dim:
+  desc: Number of stacked GRU 
+latent_dim:
+  desc: Latent dim to deal with variability in length
+  value: 30
+output_dim:
+  desc: number of logits outputd by GRU
+  value: 2
+nheads:
+  desc: Number of heads in the encoder of transformer
+  value: 10
