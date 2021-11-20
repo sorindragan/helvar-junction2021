@@ -12,7 +12,9 @@ from utils import str_to_seconds, find_position_by_polygon
 
 
 site = 'site_1'
-dict_generation = False
+dict_generation = True
+discard_simultaniously = False
+random_points = False
 df_coords = pd.read_json(f'./data/{site}/{site}.json')
 df_events = pd.read_pickle(f'./data/{site}/{site}.pkl', compression='gzip')
 
@@ -24,15 +26,27 @@ df_events = df_events.sort_values(by=['timestamp'])
 if dict_generation:
     df_events['timestamp'] = df_events['timestamp'].apply(lambda x : str_to_seconds(x))
 
+# constants
+def_neighbour = -1
+max_distance = 9999
+polygon_corners = 5
+neighbours_number = int(polygon_corners * 1.5)
+secs_between_events = 1
 
 # pctage of known ids
 pct = 0.9
-ids = list(set(df_events['deviceid']))
-shuffle(ids)
+ids = sorted(list(set(df_events['deviceid'])))
+if random_points:
+    shuffle(ids)
 
 known_ids = ids[:int(pct*len(ids))]
 initial_known_inds = deepcopy(known_ids)
 unknown_ids = [i for i in ids if i not in known_ids]
+
+# TODO: remve this shit
+unknown_ids = [25, 4, 6, 9, 45, 22]
+known_ids = [i for i in ids if i not in unknown_ids]
+initial_known_inds = deepcopy(known_ids)
 
 # tuple_dict pkl generation
 if dict_generation:
@@ -52,6 +66,8 @@ if dict_generation:
             tuple_dict[(last_d, d)] = []
         
         deltat = abs(last_t - t)
+        if deltat > secs_between_events:
+            continue
 
         if (d, last_d) in tuple_dict:
             tuple_dict[(d, last_d)].append(deltat)
@@ -74,16 +90,12 @@ neighbours_dict = {}
 for k, v in tuple_dict.items():
     avg = sum(v) / (len(v) + 1)
     # fire at the same time - prodbably different locations
-    if avg == 0:
+    if avg == 0 and discard_simultaniously:
         continue
     neighbours_dict[k] = avg
 
 neighbours_dict = sorted(neighbours_dict.items(), key=lambda x: x[0][0])
 
-def_neighbour = -1
-max_distance = 9999
-polygon_edges = 3
-neighbours_number = polygon_edges* 2
 closest_neighbours = {k:[(def_neighbour, max_distance)] * neighbours_number for k in ids}
 for k, v in neighbours_dict:
     if v < closest_neighbours[k[0]][0][1]:
@@ -92,14 +104,14 @@ for k, v in neighbours_dict:
 
 # pprint(closest_neighbours)
 
-# iteratively compute coordinates for the points with 3 known neighbours
+# iteratively compute coordinates for the points with <polygon_corners> known neighbours
 approximated_devices = {}
 # stupid init
 available_for_computation = [-1]
 while len(available_for_computation) > 0:
     available_for_computation = []
     for k, v in closest_neighbours.items():
-        if k in unknown_ids and sum([1 if i in known_ids else 0 for i in [p[0] for p in v]]) >= polygon_edges:
+        if k in unknown_ids and sum([1 if i in known_ids else 0 for i in [p[0] for p in v]]) >= polygon_corners:
             available_for_computation.append(k)
             corner_list = [(
                             (float(df_coords.iloc[int(p[0])]['x']), 
@@ -107,7 +119,7 @@ while len(available_for_computation) > 0:
                              p[1]
                             ) for p in v
                             if p[0] in known_ids
-                        ][:polygon_edges]
+                        ][:polygon_corners]
           
             points = np.array([x[0] for x in corner_list])
             distances = np.array([x[1] for x in corner_list])
@@ -120,7 +132,7 @@ while len(available_for_computation) > 0:
     known_ids += available_for_computation
     print(available_for_computation)
 
-# pprint(approximated_devices)
+pprint(approximated_devices)
 print(len(ids) - len(known_ids))
 
 # check against real solution

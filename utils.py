@@ -18,10 +18,13 @@ def str_to_seconds(strg):
 
 
 
-def find_position_by_polygon(points,distances):
+def find_position_by_polygon(points, distances):
     # points: Nx2 distances: Nx1
-    weights = 1 - np.expand_dims(distances,1)/distances.sum()
-    weights /= weights.sum()
+    if distances.sum() == 0:
+        weights = np.expand_dims(np.array([1/len(distances) for _ in range(len(distances))]),1)
+    else:
+        weights = 1 - np.expand_dims(distances,1)/distances.sum()
+        weights /= weights.sum()
     middle = (points*weights).sum(axis=0)
     return middle
 
