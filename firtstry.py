@@ -127,7 +127,7 @@ print(len(ids) - len(known_ids))
 
 # approximated points
 x = np.array([v[0] for v in approximated_devices.values()])
-y = np.array([v[0] for v in approximated_devices.values()]) 
+y = np.array([v[1] for v in approximated_devices.values()]) 
 plt.scatter(x, y, c='b')
 
 # real solution

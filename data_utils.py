@@ -29,7 +29,6 @@ class SequenceDataset(Dataset):
             n_bins_overall = int(total_time//(config['total_sequence_time']* 3600))
             n_bins_fine = int(config['total_sequence_time']* 3600//config['bin_width'])
             binned_overall = pd.cut(df_events['timestamp'],bins= n_bins_overall,labels = False)
-            timestamps = df_events['timestamp']
             for overall_index in tqdm(np.unique(binned_overall)):
                 overall_mask = binned_overall==overall_index
                 overall_df  = df_events.iloc[np.where(overall_mask)[0],:]
@@ -38,7 +37,8 @@ class SequenceDataset(Dataset):
                 for fine_index in binned_fine:
                     filtered_fine = overall_df[overall_df['fine_index'] == fine_index]
                     filtered_fine['deviceid'].unique()
-                    boolean_array = np.zeros()
+                    boolean_array = np.zeros(n_devices)
+
 
                     pass
 
