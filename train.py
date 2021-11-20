@@ -22,8 +22,7 @@ loss_fn = torch.nn.MSELoss()
 devices = 5
 coordinates = torch.randint(10,(16,5,3)).repeat(16,1,1,1) 
 
-epochs = range(10)
-for e in config.epochs:
+for epoch in range(1, config.epochs+1):
     for batch in coordinates:
         optimizer.zero_grad(())
 
