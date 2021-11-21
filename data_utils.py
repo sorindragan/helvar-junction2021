@@ -54,9 +54,9 @@ class SequenceDataset(Dataset):
 
         self.data_lists = []
         self.df_coords = []
-        for site_number in [1,2,3,4,5]:
+        for site_number in [1,2,3]:
             path_data_list = f"data/site_{site_number}/data_list_{site_number}.pkl"
-            self.df_coords.append(df_coords = pd.read_json(f'./data/site_{site_number}/site_{site_number}.json'))
+            self.df_coords.append(pd.read_json(f'./data/site_{site_number}/site_{site_number}.json'))
             self.data_lists.append(pickle_load(path_data_list))
         
         self.list_lengths = np.array([len(x) for x in self.data_lists])
@@ -74,19 +74,20 @@ class SequenceDataset(Dataset):
         i = -1
         while True:
             i+=1
-            range = ranges[i]
-            if idx in range:
-                inner_index = idx - range[0]
+            range_tuple = ranges[i]
+            if idx >= range_tuple[0]:
+                inner_index = idx - range_tuple[0]
                 site_number = i
-            break
+                break
 
         data_list = self.data_lists[site_number][inner_index:inner_index+s]
         device_df = self.df_coords[site_number]
         n_devices = device_df.shape[0]
         rows = []
-        device_indexes = range(0,n_devices)
+        device_indexes = list(range(0,n_devices))
         random.shuffle(device_indexes)
-        train_known_range = random.randrange(config["train_known_range"][0],config['train_known_range'][1],0.05)
+        train_known_range = random.randrange(int(self.config["train_known_range"][0]*10),int(self.config['train_known_range'][1]*10),1)
+        train_known_range /= 10
 
         to_predict = device_indexes[:int((1- train_known_range)*n_devices)]
         for x in data_list:
@@ -97,6 +98,8 @@ class SequenceDataset(Dataset):
         
         coords = device_df[["x","y"]].values
 
+
+        coords/= np.array([5000, 1000])
         coords[to_predict,:] = -1
 
         return sequence , coords

@@ -13,7 +13,7 @@ min_drop_count:
 sequence_length_train:
   desc: Sequence length train
   value: 1024
-train_known_range
+train_known_range:
   value: [0.3,0.9]
 
 
