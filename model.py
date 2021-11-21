@@ -12,7 +12,6 @@ class SequenceLearner(nn.Module):
         self.num_layers = config.layer_dim
         self.output_dim = config.output_dim
     
-        self.encoder = Encoder(config)
 
         self.gru = nn.GRU(input_size=self.input_size,
                           hidden_size=self.hidden_size,
@@ -30,12 +29,17 @@ class SequenceLearner(nn.Module):
         out = out[:, -1, :]
         
         return self.fc(out)
+    
+    def set_coordinates(self, coordinates):
+        self.encoder = Encoder(config, coordinates)
+
 
 class Encoder(nn.Module):
-    def __init__(self, config):
+    def __init__(self, config, coordinates):
         super(Encoder, self).__init__()
+        self.register_buffer('coordinates', vertice.clone())
         self.mlp = nn.Linear(config.output_dim, config.latent_dim)
-        self.transformer = nn.TransformerEncoderLayer(d_model=config.latent_dim, nhead=config.nheads10)
+        self.transformer = nn.TransformerEncoderLayer(d_model=config.latent_dim, nhead=config.nheads)
 
     def forward(self, x):
         output, _ = self.transformer(self.mlp(x)).max(axis=1)
