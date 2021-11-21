@@ -42,6 +42,5 @@ class Encoder(nn.Module):
         self.transformer = nn.TransformerEncoderLayer(d_model=config.latent_dim, nhead=config.nheads)
 
     def forward(self, x):
-        x = 
         output, _ = self.transformer(self.mlp(x)).max(axis=1)
         return output
