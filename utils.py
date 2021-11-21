@@ -1,6 +1,8 @@
 import yaml
 from datetime import datetime
 import numpy as np
+import pickle
+import os
 
 def yaml_loader(path):
     config_dict = {}
@@ -24,8 +26,12 @@ def str_to_seconds(strg,return_date = False):
 
     return date_time_obj
 
-
-
+def pickle_load(path):
+    with open(path,"rb") as f:
+        return pickle.load(f)
+def pickle_dump(path,thing):
+    with open(path,"wb") as f:
+        pickle.dump(thing,f)
 
 
 def find_position_by_polygon(points, distances):
