@@ -4,6 +4,15 @@ bin_width:
 total_sequence_time:
   desc: Total sequence time in hours
   value: 2
+drop_width:
+  desc: Value to drop if empty (hours)
+  value: 1
+min_drop_count:
+  desc: Minimum amount to not drop
+  value: 300
+
+
+
 epochs:
   desc: self-descriptive
   value: 30
